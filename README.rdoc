@@ -1,17 +1,37 @@
 = s3-publisher
 
-Description goes here.
+S3Publisher is meant as a clean, simple, sensible-defaults way to publish
+files to Amazon S3 for the world to see.
 
-== Note on Patches/Pull Requests
- 
-* Fork the project.
-* Make your feature addition or bug fix.
-* Add tests for it. This is important so I don't break it in a
-  future version unintentionally.
-* Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but
-   bump version in a commit by itself I can ignore when I pull)
-* Send me a pull request. Bonus points for topic branches.
+Basic usage:
+
+    require 's3-publisher'
+    S3Publisher.publish('my-bucket') do |p|
+        p.push('test.txt', 'abc1234')
+    end
+
+This will:
+* push test.txt to my-bucket.s3.amazonaws.com
+* use reduced redundancy storage
+* set security to public-read
+* gzip contents ('abc1234') and set a Content-Encoding: gzip header so clients know to decompress
+* set a Cache-Control: max-age=5 header
+
+Slightly more advanced example:
+
+    S3Publisher.publish('my-bucket', :base_path => 'world_cup') do |p|
+        p.push('events.xml', '<xml>...', :ttl => 15)
+    end
+
+In this example:
+* file will be written to my-bucket.s3.amazonaws.com/world_cup/events.xml
+* Cache-Control: max-age=15 will be set
+  
+A few miscellaneous notes:
+* gzip compress is skipped on .jpg/gif/png/tif files
+* uploads are multi-threaded.  You can control worker thread count on instantiation.
+
+See class docs for further options.
 
 == Copyright
 

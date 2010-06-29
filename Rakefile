@@ -5,12 +5,14 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "s3-publisher"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
-    gem.email = "bkoski@nytimes.com"
+    gem.summary = %Q{Publish data to S3 for the world to see}
+    gem.description = %Q{Publish data to S3 for the world to see}
+    gem.email = "gems@benkoski.com"
     gem.homepage = "http://github.com/bkoski/s3-publisher"
     gem.authors = ["Ben Koski"]
     gem.add_development_dependency "thoughtbot-shoulda"
+    gem.add_dependency 'aws_credentials'
+    gem.add_dependency 'right_aws', '=2.0.0'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
 rescue LoadError
