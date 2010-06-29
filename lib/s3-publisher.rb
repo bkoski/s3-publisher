@@ -80,6 +80,7 @@ class S3Publisher
     threads = []
     workers_to_use.times { threads << Thread.new { publish_from_queue } }
     threads.each { |t| t.join }
+    true
   end
   
   private

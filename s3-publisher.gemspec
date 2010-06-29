@@ -24,6 +24,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "lib/s3-publisher.rb",
+     "s3-publisher.gemspec",
      "test/s3-publisher_test.rb",
      "test/test_helper.rb"
   ]
