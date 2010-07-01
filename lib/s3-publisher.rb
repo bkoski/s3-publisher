@@ -37,6 +37,7 @@ class S3Publisher
                                                                                          :port => 80, 
                                                                                          :logger => Logger.new(nil))
     @bucket_name, @base_path = bucket_name, opts[:base_path]
+    raise ArgumentError, "#{bucket_name} doesn't seem to be a valid bucket on your account" if @s3.bucket(bucket_name).nil?
     @logger = opts[:logger] || $stdout
     @workers_to_use = opts[:workers] || 3
     @publish_queue = Queue.new
