@@ -37,7 +37,7 @@ class S3Publisher
                                                                                          :port => 80, 
                                                                                          :logger => Logger.new(nil))
     @bucket_name, @base_path = bucket_name, opts[:base_path]
-    @logger = opts[:logger] || STDOUT
+    @logger = opts[:logger] || $stdout
     @workers_to_use = opts[:workers] || 3
     @publish_queue = Queue.new
   end
