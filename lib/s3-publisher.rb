@@ -84,6 +84,10 @@ class S3Publisher
     true
   end
   
+  def inspect
+    "#<S3Publisher:#{bucket_name}>"
+  end
+  
   private
   def gzip data
     gzipped_data = StringIO.open('', 'w+')
