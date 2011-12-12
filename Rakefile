@@ -12,7 +12,7 @@ begin
     gem.authors = ["Ben Koski"]
     gem.add_development_dependency "thoughtbot-shoulda"
     gem.add_dependency 'aws_credentials'
-    gem.add_dependency 'right_aws', '=2.0.0'
+    gem.add_dependency 'right_aws', '>=3.0.0'
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
 rescue LoadError
