@@ -43,15 +43,15 @@ class S3PublisherTest < Test::Unit::TestCase
     end
     
     context "redundancy" do
-      should "set REDUCED_REDUNDANCY by default" do
-        set_put_expectation(:headers => { 'x-amz-storage-class' => 'REDUCED_REDUNDANCY' })
+      should "set STANDARD by default" do
+        set_put_expectation(:headers => { 'x-amz-storage-class' => 'STANDARD' })
         push_test_data('myfile.txt', '1234', {})
 
       end
       
-      should "set STANDARD if :redundancy => :standard is passed" do
-        set_put_expectation(:headers => { 'x-amz-storage-class' => 'STANDARD' })
-        push_test_data('myfile.txt', '1234', :redundancy => :standard)
+      should "set REDUCED_REDUNDANCY if :redundancy => :reduced is passed" do
+        set_put_expectation(:headers => { 'x-amz-storage-class' => 'REDUCED_REDUNDANCY' })
+        push_test_data('myfile.txt', '1234', :redundancy => :reduced)
       end
     end
 

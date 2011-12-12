@@ -12,7 +12,6 @@ Basic usage:
 
 This will:
 * push test.txt to my-bucket.s3.amazonaws.com
-* use reduced redundancy storage
 * set security to public-read
 * gzip contents ('abc1234') and set a Content-Encoding: gzip header so clients know to decompress
 * set a Cache-Control: max-age=5 header
@@ -30,9 +29,11 @@ In this example:
 A few miscellaneous notes:
 * gzip compress is skipped on .jpg/gif/png/tif files
 * uploads are multi-threaded.  You can control worker thread count on instantiation.
+* pass :redundancy => :reduced when instantiating the publisher to write to reduced
+redundancy storage (this used to be the default, but now requires the option to be set.)
 
 See class docs for further options.
 
 == Copyright
 
-Copyright (c) 2010 Ben Koski. See LICENSE for details.
+Copyright (c) 2011 Ben Koski. See LICENSE for details.

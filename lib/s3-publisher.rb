@@ -1,11 +1,8 @@
-require 'rubygems'
-
-gem 'right_aws', '=2.0.0'
-require 'right_aws'
-
-require 'aws_credentials'
 require 'zlib'
 require 'thread'
+
+require 'right_aws'
+require 'aws_credentials'
 
 Thread.abort_on_exception = true
 
@@ -64,7 +61,7 @@ class S3Publisher
       headers['Content-Encoding'] = 'gzip'
     end
     
-    headers['x-amz-storage-class'] = opts[:redundancy] == :standard ? 'STANDARD' : 'REDUCED_REDUNDANCY' 
+    headers['x-amz-storage-class'] = opts[:redundancy] == :reduced ? 'REDUCED_REDUNDANCY' : 'STANDARD'
     headers['Content-Type']        = parse_content_type(opts[:content_type])  if opts[:content_type]
 
     if opts.has_key?(:cache_control)
