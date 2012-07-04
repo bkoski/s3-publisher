@@ -62,7 +62,7 @@ class S3Publisher
     end
     
     headers['x-amz-storage-class'] = opts[:redundancy] == :reduced ? 'REDUCED_REDUNDANCY' : 'STANDARD'
-    headers['Content-Type']        = parse_content_type(opts[:content_type])  if opts[:content_type]
+    headers['content-type']        = parse_content_type(opts[:content_type])  if opts[:content_type]
 
     if opts.has_key?(:cache_control)
       headers['Cache-Control'] = opts[:cache_control]
@@ -122,7 +122,7 @@ class S3Publisher
         retry
       end
     
-      logger << "Wrote http://#{bucket_name}.s3.amazonaws.com/#{item[:key_name]}"
+      logger << "Wrote http://#{bucket_name}.s3.amazonaws.com/#{item[:key_name]} with #{item[:headers].inspect}\n"
     end
   rescue ThreadError  # ThreadError hit when queue is empty.  Simply jump out of loop and return to join().
   end
