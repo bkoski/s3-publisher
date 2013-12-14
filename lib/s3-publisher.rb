@@ -27,10 +27,11 @@ class S3Publisher
   # Pass the publisher a bucket_name along with any of the following options:
   # * <tt>base_path</tt> - path prepended to supplied file_name on upload
   # * <tt>logger</tt> - a logger object to recieve 'uploaded' messages.  Defaults to STDOUT.
+  # * <tt>protocol</tt> - protocol to use for S3 requests. Defaults to 'http', but 'https' can also be used.
   # * <tt>workers</tt> - number of threads to use when pushing to S3. Defaults to 3.
   def initialize bucket_name, opts={}
     @s3 =  RightAws::S3.new(AWSCredentials.access_key, AWSCredentials.secret_access_key, :multi_thread => true,
-                                                                                         :protocol => 'http',
+                                                                                         :protocol => opts[:protocol] || 'http',
                                                                                          :port => 80, 
                                                                                          :logger => Logger.new(nil))
     @bucket_name, @base_path = bucket_name, opts[:base_path]
