@@ -1,39 +1,55 @@
-= s3-publisher
+# s3-publisher
 
-S3Publisher is meant as a clean, simple, sensible-defaults way to publish
-files to Amazon S3 for the world to see.
+Quickly pub your data files to S3.
 
-Basic usage:
+Reasons you might want to use this instead of aws-sdk directly:
 
-    require 's3-publisher'
-    S3Publisher.publish('my-bucket') do |p|
-        p.push('test.txt', 'abc1234')
-    end
+  * parallel uploads using ruby threads.  Concurrency defaults to 3 but can be increased.
+  * gzip, by default S3Publisher gzips so you don't have to.
+  * try-again technology, it will retry if a S3 request fails.
+  * no need to remember all the correct opts for content-type, acl, etc.
+
+### Basic usage:
+
+```
+require 's3-publisher'
+S3Publisher.publish('my-bucket') do |p|
+   p.push('test.txt', data: 'abc1234')
+end
+```
 
 This will:
-* push test.txt to my-bucket.s3.amazonaws.com
-* set security to public-read
-* gzip contents ('abc1234') and set a Content-Encoding: gzip header so clients know to decompress
-* set a Cache-Control: max-age=5 header
 
-Slightly more advanced example:
+ * push test.txt to my-bucket.s3.amazonaws.com
+ * set security to public-read
+ * gzip contents ('abc1234') and set a Content-Encoding: gzip header so clients know to decompress
+ * set a Cache-Control: max-age=5 header
 
-    S3Publisher.publish('my-bucket', :base_path => 'world_cup') do |p|
-        p.push('events.xml', '<xml>...', :ttl => 15)
-    end
+
+You can also pass file paths, rather than string data.  Files aren't read until publish-time, saving memory.
+
+```
+require 's3-publisher'
+S3Publisher.publish('my-bucket') do |p|
+   p.push('test.json', file: '/tmp/test.json')
+end
+```
+
+### Slightly more advanced example:
+
+```
+S3Publisher.publish('my-bucket', :base_path => 'world_cup') do |p|
+    p.push('events.xml', '<xml>...', :ttl => 15)
+end
+```
 
 In this example:
-* file will be written to my-bucket.s3.amazonaws.com/world_cup/events.xml
-* Cache-Control: max-age=15 will be set
+
+ * file will be written to my-bucket.s3.amazonaws.com/world_cup/events.xml
+ * Cache-Control: max-age=15 will be set
   
 A few miscellaneous notes:
-* gzip compress is skipped on .jpg/gif/png/tif files
-* uploads are multi-threaded.  You can control worker thread count on instantiation.
-* pass :redundancy => :reduced when instantiating the publisher to write to reduced
-redundancy storage (this used to be the default, but now requires the option to be set.)
 
-See class docs for further options.
+ * gzip compress is skipped on .jpg/gif/png/tif files
 
-== Copyright
-
-Copyright (c) 2011 Ben Koski. See LICENSE for details.
+See class docs for more options.

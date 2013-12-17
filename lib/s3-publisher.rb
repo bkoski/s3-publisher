@@ -1,5 +1,6 @@
 require 'zlib'
 require 'thread'
+require 'pathname'
 
 require 'aws-sdk'
 require 'aws_credentials'
@@ -22,10 +23,10 @@ class S3Publisher
     p.run
   end
 
-  # Pass the publisher a bucket_name along with any of the following options:
-  # * <tt>base_path</tt> - path prepended to supplied file_name on upload
-  # * <tt>logger</tt> - a logger object to recieve 'uploaded' messages.  Defaults to STDOUT.
-  # * <tt>workers</tt> - number of threads to use when pushing to S3. Defaults to 3.
+  # @param [String] bucket_name
+  # @option opts [String] :base_path Path prepended to supplied file_name on upload
+  # @option opts [Integer] :workers Number of threads to use when pushing to S3. Defaults to 3.
+  # @option opts [Object] :logger A logger object to recieve 'uploaded' messages.  Defaults to STDOUT.
   def initialize bucket_name, opts={}
     @publish_queue = Queue.new
     @workers_to_use = opts[:workers] || 3
@@ -40,29 +41,34 @@ class S3Publisher
     @bucket_name, @base_path = bucket_name, opts[:base_path]
     raise ArgumentError, "#{bucket_name} doesn't seem to be a valid bucket on your account" if @s3.buckets[bucket_name].nil?
   end
-  
-  # Pass:
-  # * <tt>file_name</tt> - name of file on S3. base_path will be prepended if supplied on instantiate.
-  # * <tt>data</tt> - data to be uploaded as a string
+
+  # Queues a file to be published.
+  # You can provide :data as a string, or a path to a file with :file.
+  # :file references won't be evaluated until publish-time, reducing memory overhead.
   #
-  # And one or many options:
-  # * <tt>:gzip (true|false)</tt> - gzip file contents?  defaults to true.
-  # * <tt>:ttl</tt> - TTL in seconds for cache-control header. defaults to 5.
-  # * <tt>:cache_control</tt> - specify Cache-Control header directly if you don't like the default
-  # * <tt>:content_type</tt> - no need to specify if default based on extension is okay.  But if you need to force,
-  #   you can provide :xml, :html, :text, or your own custom string.
-  # * <tt>:redundancy</tt> - by default objects are stored at reduced redundancy, pass :standard to store at full
-  def push file_name, data, opts={}
-    write_opts = {}
+  # @param [String] key_name  The name of the file on S3.  base_path will be prepended if supplied.
+  # @option opts [String] :data  a string to be published
+  # @option opts [String] :file  path to a file to publish
+  # @option opts [Boolean] :gzip  gzip file contents?  defaults to true.
+  # @option opts [Integer] :ttl  TTL in seconds for cache-control header. defaults to 5.
+  # @option opts [String] :cache_control  specify Cache-Control header directly if you don't like the default
+  # @option opts [String] :content_type  no need to specify if default based on extension is okay.  But if you need to force,
+  #                                      you can provide :xml, :html, :text, or your own custom string.
+  def push key_name, opts={}
+    write_opts = { acl: 'public-read' }
     
-    file_name = "#{base_path}/#{file_name}" unless base_path.nil?
-    
-    unless opts[:gzip] == false || file_name.match(/\.(jpg|gif|png|tif)$/)
-      data = gzip(data)
-      write_opts[:content_encoding] = 'gzip'
-    end
-    
+    key_name = "#{base_path}/#{key_name}" unless base_path.nil?
+        
     write_opts[:content_type] = parse_content_type(opts[:content_type])  if opts[:content_type]
+
+    if opts[:data]
+      contents = opts[:data]
+    elsif opts[:file]
+      contents = Pathname.new(opts[:file])
+      raise "'#{opts[:file]}' does not exist!" if !contents.exist?
+    else
+      raise "A :file or :data attr must be provided to publish to S3!"
+    end
 
     if opts.has_key?(:cache_control)
       write_opts[:cache_control] = opts[:cache_control]
@@ -70,7 +76,9 @@ class S3Publisher
       write_opts[:cache_control] = "max-age=#{opts[:ttl] || 5}"
     end
 
-    @publish_queue.push({ key_name: file_name, data: data, write_opts: write_opts })
+    opts[:gzip] = true unless opts.has_key?(:gzip)
+
+    @publish_queue.push({ key_name: key_name, contents: contents, write_opts: write_opts, gzip: opts[:gzip] })
   end  
     
   # Process queued uploads and push to S3
@@ -116,7 +124,17 @@ class S3Publisher
       try_count = 0
       begin
         obj = @s3.buckets[bucket_name].objects[item[:key_name]]
-        obj.write(item[:data], item[:write_opts].merge(acl: 'public-read'))
+
+        gzip = item[:gzip] != false && !item[:key_name].match(/\.(jpg|gif|png|tif)$/)
+
+        if gzip
+          item[:write_opts][:content_encoding] = 'gzip'
+          gzip_body = item[:contents].is_a?(Pathname) ? item[:contents].read : item[:contents]
+          item[:contents] = gzip(gzip_body)
+        end
+
+        obj.write(item[:contents], item[:write_opts])
+
       rescue Exception => e # backstop against transient S3 errors
         raise e if try_count >= 1
         try_count += 1
