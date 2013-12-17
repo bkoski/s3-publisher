@@ -2,9 +2,9 @@
 
 Gem::Specification.new do |s|
   s.name        = "s3-publisher"
-  s.version     = "0.4.4"
+  s.version     = "0.9.0"
   s.authors     = ["Ben Koski"]
-  s.email       = "gems@benkoski.com"
+  s.email       = "bkoski@nytimes.com"
   s.summary     = "Publish data to S3 for the world to see"
   s.description = "Publish data to S3 for the world to see"
   s.homepage    = "http://github.com/bkoski/s3-publisher"
