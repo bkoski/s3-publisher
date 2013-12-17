@@ -121,7 +121,7 @@ class S3Publisher
       begin
         obj = @s3.buckets[bucket_name].objects[item[:key_name]]
 
-        gzip = item[:gzip] != false && !item[:key_name].match(/\.(jpg|gif|png|tif)$/)
+        gzip = item[:gzip] != false && !item[:write_opts][:content_type].match('image/')
 
         if gzip
           item[:write_opts][:content_encoding] = 'gzip'

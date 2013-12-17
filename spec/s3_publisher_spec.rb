@@ -30,7 +30,7 @@ describe S3Publisher do
         push_test_data('myfile.txt', data: '1234', gzip: false)
       end
 
-      it "does not gzip data if file ends in .jpg" do
+      it "does not gzip image files" do
         set_put_expectation(key_name: 'myfile.jpg', data: '1234')
         push_test_data('myfile.jpg', data: '1234')
       end
