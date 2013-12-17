@@ -18,4 +18,5 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency(%q<rspec>, [">= 0"])
   s.add_runtime_dependency(%q<aws-sdk>, [">= 1.0"])
+  s.add_runtime_dependency(%q<mime-types>, [">= 0"])
 end

@@ -54,24 +54,18 @@ describe S3Publisher do
     end
     
     describe "content type" do
+      it "detects content type based on extension" do
+        set_put_expectation(key_name: 'myfile.xml', content_type: 'application/xml')
+        push_test_data('myfile.xml', data: '1234')
+      end
+      
       it "forces Content-Type to user-supplied string if provided" do
         set_put_expectation(content_type: 'audio/vorbis')
         push_test_data('myfile.txt', data: '1234', content_type: 'audio/vorbis')
       end
-      
-      it "forces Content-Type to application/xml if :xml provided" do
-        set_put_expectation(content_type: 'application/xml')
-        push_test_data('myfile.txt', data: '1234', content_type: :xml)
-      end
-      
-      it "forces Content-Type to text/plain if :text provided" do
-        set_put_expectation(content_type: 'text/plain')
-        push_test_data('myfile.txt', data: '1234', content_type: :text)
-      end
-      
-      it "forces Content-Type to text/html if :html provided" do
-        set_put_expectation(content_type: 'text/html')
-        push_test_data('myfile.txt', data: '1234', content_type: :html)
+
+      it "raises an exception if the content-type cannot be parsed" do
+        expect { push_test_data('myfile', data: '1234') }.to raise_error(ArgumentError)
       end
     end
 

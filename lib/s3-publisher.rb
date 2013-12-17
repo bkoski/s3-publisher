@@ -3,7 +3,7 @@ require 'thread'
 require 'pathname'
 
 require 'aws-sdk'
-require 'aws_credentials'
+require 'mime-types'
 
 # You can either use the block syntax, or:
 # * instantiate a class
@@ -58,18 +58,27 @@ class S3Publisher
     write_opts = { acl: 'public-read' }
     
     key_name = "#{base_path}/#{key_name}" unless base_path.nil?
-        
-    write_opts[:content_type] = parse_content_type(opts[:content_type])  if opts[:content_type]
-
+    
+    # Setup data.
     if opts[:data]
       contents = opts[:data]
     elsif opts[:file]
       contents = Pathname.new(opts[:file])
-      raise "'#{opts[:file]}' does not exist!" if !contents.exist?
+      raise ArgumentError, "'#{opts[:file]}' does not exist!" if !contents.exist?
     else
-      raise "A :file or :data attr must be provided to publish to S3!"
+      raise ArgumentError, "A :file or :data attr must be provided to publish to S3!"
     end
 
+    # Then Content-Type
+    if opts[:content_type]
+      write_opts[:content_type] = opts[:content_type]
+    else
+      matching_mimes = MIME::Types.type_for(key_name)
+      raise  ArgumentError, "Can't infer the content-type for '#{key_name}'! Please specify with the :content_type opt." if matching_mimes.empty?
+      write_opts[:content_type] = matching_mimes.first.to_s
+    end
+
+    # And Cache-Control
     if opts.has_key?(:cache_control)
       write_opts[:cache_control] = opts[:cache_control]
     else
@@ -102,19 +111,6 @@ class S3Publisher
     gzip_writer.close
     
     return gzipped_data.string
-  end
-    
-  def parse_content_type content_type
-    case content_type
-    when :xml
-      'application/xml'
-    when :text
-      'text/plain'
-    when :html
-      'text/html'
-    else
-      content_type
-    end
   end
   
   def publish_from_queue
