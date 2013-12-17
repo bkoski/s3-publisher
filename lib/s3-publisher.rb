@@ -1,10 +1,8 @@
 require 'zlib'
 require 'thread'
 
-require 'right_aws'
+require 'aws-sdk'
 require 'aws_credentials'
-
-Thread.abort_on_exception = true
 
 # You can either use the block syntax, or:
 # * instantiate a class
@@ -27,18 +25,20 @@ class S3Publisher
   # Pass the publisher a bucket_name along with any of the following options:
   # * <tt>base_path</tt> - path prepended to supplied file_name on upload
   # * <tt>logger</tt> - a logger object to recieve 'uploaded' messages.  Defaults to STDOUT.
-  # * <tt>protocol</tt> - protocol to use for S3 requests. Defaults to 'http', but 'https' can also be used.
   # * <tt>workers</tt> - number of threads to use when pushing to S3. Defaults to 3.
   def initialize bucket_name, opts={}
-    @s3 =  RightAws::S3.new(AWSCredentials.access_key, AWSCredentials.secret_access_key, :multi_thread => true,
-                                                                                         :protocol => opts[:protocol] || 'http',
-                                                                                         :port => 80, 
-                                                                                         :logger => Logger.new(nil))
-    @bucket_name, @base_path = bucket_name, opts[:base_path]
-    raise ArgumentError, "#{bucket_name} doesn't seem to be a valid bucket on your account" if @s3.bucket(bucket_name).nil?
-    @logger = opts[:logger] || $stdout
-    @workers_to_use = opts[:workers] || 3
     @publish_queue = Queue.new
+    @workers_to_use = opts[:workers] || 3
+    @logger = opts[:logger] || $stdout
+
+    s3_opts = {}
+    s3_opts[:access_key_id]     = opts[:access_key_id]     if opts.key?(:access_key_id)
+    s3_opts[:secret_access_key] = opts[:secret_access_key] if opts.key?(:secret_access_key)
+    
+    @s3 = AWS::S3.new(s3_opts)
+
+    @bucket_name, @base_path = bucket_name, opts[:base_path]
+    raise ArgumentError, "#{bucket_name} doesn't seem to be a valid bucket on your account" if @s3.buckets[bucket_name].nil?
   end
   
   # Pass:
@@ -53,25 +53,24 @@ class S3Publisher
   #   you can provide :xml, :html, :text, or your own custom string.
   # * <tt>:redundancy</tt> - by default objects are stored at reduced redundancy, pass :standard to store at full
   def push file_name, data, opts={}
-    headers = {}
+    write_opts = {}
     
     file_name = "#{base_path}/#{file_name}" unless base_path.nil?
     
     unless opts[:gzip] == false || file_name.match(/\.(jpg|gif|png|tif)$/)
       data = gzip(data)
-      headers['Content-Encoding'] = 'gzip'
+      write_opts[:content_encoding] = 'gzip'
     end
     
-    headers['x-amz-storage-class'] = opts[:redundancy] == :reduced ? 'REDUCED_REDUNDANCY' : 'STANDARD'
-    headers['content-type']        = parse_content_type(opts[:content_type])  if opts[:content_type]
+    write_opts[:content_type] = parse_content_type(opts[:content_type])  if opts[:content_type]
 
     if opts.has_key?(:cache_control)
-      headers['Cache-Control'] = opts[:cache_control]
+      write_opts[:cache_control] = opts[:cache_control]
     else
-      headers['Cache-Control'] = "max-age=#{opts[:ttl] || 5}"
+      write_opts[:cache_control] = "max-age=#{opts[:ttl] || 5}"
     end
 
-    @publish_queue.push({:key_name => file_name, :data => data, :headers => headers})
+    @publish_queue.push({ key_name: file_name, data: data, write_opts: write_opts })
   end  
     
   # Process queued uploads and push to S3
@@ -116,14 +115,15 @@ class S3Publisher
     
       try_count = 0
       begin
-        @s3.bucket(bucket_name).put(item[:key_name], item[:data], {}, 'public-read', item[:headers])
+        obj = @s3.buckets[bucket_name].objects[item[:key_name]]
+        obj.write(item[:data], item[:write_opts].merge(acl: 'public-read'))
       rescue Exception => e # backstop against transient S3 errors
         raise e if try_count >= 1
         try_count += 1
         retry
       end
     
-      logger << "Wrote http://#{bucket_name}.s3.amazonaws.com/#{item[:key_name]} with #{item[:headers].inspect}\n"
+      logger << "Wrote http://#{bucket_name}.s3.amazonaws.com/#{item[:key_name]} with #{item[:write_opts].inspect}\n"
     end
   rescue ThreadError  # ThreadError hit when queue is empty.  Simply jump out of loop and return to join().
   end

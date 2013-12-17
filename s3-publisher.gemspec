@@ -16,7 +16,6 @@ Gem::Specification.new do |s|
 
   s.require_paths = ["lib"]
 
-  s.add_development_dependency(%q<thoughtbot-shoulda>, [">= 0"])
-  s.add_runtime_dependency(%q<aws_credentials>, [">= 0"])
-  s.add_runtime_dependency(%q<right_aws>, [">= 3.0.0"])
+  s.add_development_dependency(%q<rspec>, [">= 0"])
+  s.add_runtime_dependency(%q<aws-sdk>, [">= 1.0"])
 end
