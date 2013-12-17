@@ -39,7 +39,7 @@ end
 
 ```
 S3Publisher.publish('my-bucket', :base_path => 'world_cup') do |p|
-    p.push('events.xml', '<xml>...', :ttl => 15)
+    p.push('events.xml', data: '<xml>...', ttl: 15)
 end
 ```
 
