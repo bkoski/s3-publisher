@@ -26,7 +26,7 @@ This will:
  * set a Cache-Control: max-age=5 header
 
 
-You can also pass file paths, rather than string data.  Files aren't read until publish-time, saving memory.
+You can also pass file paths, rather than string data.  Files aren't read until publish time, saving memory.
 
 ```
 require 's3-publisher'
