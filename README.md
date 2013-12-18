@@ -39,7 +39,7 @@ end
 
 ```
 S3Publisher.publish('my-bucket', :base_path => 'world_cup') do |p|
-    p.push('events.xml', '<xml>...', :ttl => 15)
+    p.push('events.xml', data: '<xml>...', ttl: 15)
 end
 ```
 
@@ -47,9 +47,14 @@ In this example:
 
  * file will be written to my-bucket.s3.amazonaws.com/world_cup/events.xml
  * Cache-Control: max-age=15 will be set
-  
-A few miscellaneous notes:
-
- * gzip compress is skipped on .jpg/gif/png/tif files
 
 See class docs for more options.
+
+### AWS Credentials
+
+Since S3Publisher uses [aws-sdk](https://github.com/aws/aws-sdk-ruby) any of the usual credential stores will work, including:
+
+ * `AWS.config(access_key_id: '...', secret_access_key: '...', region: 'us-west-2')`
+ * `config/aws.yml` in a RAILS project
+ * ENV vars
+
