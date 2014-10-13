@@ -27,6 +27,10 @@ class S3Publisher
   # @option opts [String] :base_path Path prepended to supplied file_name on upload
   # @option opts [Integer] :workers Number of threads to use when pushing to S3. Defaults to 3.
   # @option opts [Object] :logger A logger object to recieve 'uploaded' messages.  Defaults to STDOUT.
+  # @option opts [String] :access_key_id AWS access key to use, if different than global AWS config
+  # @option opts [String] :secret_access_key AWS secret access key to use, if different than global AWS config
+  # @option opts [String] :region AWS region to use, if different than global AWS config
+
   def initialize bucket_name, opts={}
     @publish_queue = Queue.new
     @workers_to_use = opts[:workers] || 3
@@ -35,7 +39,8 @@ class S3Publisher
     s3_opts = {}
     s3_opts[:access_key_id]     = opts[:access_key_id]     if opts.key?(:access_key_id)
     s3_opts[:secret_access_key] = opts[:secret_access_key] if opts.key?(:secret_access_key)
-    
+    s3_opts[:region]            = opts[:region]            if opts.key?(:region)
+
     @s3 = AWS::S3.new(s3_opts)
 
     @bucket_name, @base_path = bucket_name, opts[:base_path]

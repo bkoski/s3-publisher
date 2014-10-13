@@ -38,7 +38,7 @@ end
 ### Slightly more advanced example:
 
 ```
-S3Publisher.publish('my-bucket', :base_path => 'world_cup') do |p|
+S3Publisher.publish('my-bucket', :base_path => 'world_cup', :region => 'us-west-1') do |p|
     p.push('events.xml', data: '<xml>...', ttl: 15)
 end
 ```
@@ -47,6 +47,7 @@ In this example:
 
  * file will be written to my-bucket.s3.amazonaws.com/world_cup/events.xml
  * Cache-Control: max-age=15 will be set
+ * files will be published into the us-west-1 AWS region (If not specified, this takes the AWS client default.  Normally this is not necessary unless you are publishing to two regions from the same session.)
 
 See class docs for more options.
 
