@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = "s3-publisher"
-  s.version     = "0.9.2"
+  s.version     = "0.9.3"
   s.authors     = ["Ben Koski"]
   s.email       = "bkoski@nytimes.com"
   s.summary     = "Publish data to S3 for the world to see"
@@ -17,6 +17,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_development_dependency(%q<rspec>, [">= 0"])
-  s.add_runtime_dependency(%q<aws-sdk>, [">= 1.0"])
+  s.add_runtime_dependency(%q<aws-sdk>, ["~> 1.0"])
   s.add_runtime_dependency(%q<mime-types>, [">= 0"])
 end
