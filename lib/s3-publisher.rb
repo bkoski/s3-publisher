@@ -27,24 +27,19 @@ class S3Publisher
   # @option opts [String] :base_path Path prepended to supplied file_name on upload
   # @option opts [Integer] :workers Number of threads to use when pushing to S3. Defaults to 3.
   # @option opts [Object] :logger A logger object to recieve 'uploaded' messages.  Defaults to STDOUT.
-  # @option opts [String] :access_key_id AWS access key to use, if different than global AWS config
-  # @option opts [String] :secret_access_key AWS secret access key to use, if different than global AWS config
-  # @option opts [String] :region AWS region to use, if different than global AWS config
+  #
+  # Additional keys will be passed through to the Aws::S3::Client init, including:
+  # @option opts [String] :region AWS region to use, if different than global Aws config
+  # @option opts [Object] :credentials - :access_key_id, :secret_access_key, and :session_token options, if different than global Aws config
+  # See http://docs.aws.amazon.com/sdkforruby/api/Aws/S3/Client.html#initialize-instance_method for full details.
 
   def initialize bucket_name, opts={}
     @publish_queue = Queue.new
-    @workers_to_use = opts[:workers] || 3
-    @logger = opts[:logger] || $stdout
+    @workers_to_use = opts.delete(:workers) || 3
+    @logger         = opts.delete(:logger)  || $stdout
+    @bucket_name, @base_path = bucket_name, opts.delete(:base_path)
 
-    s3_opts = {}
-    s3_opts[:access_key_id]     = opts[:access_key_id]     if opts.key?(:access_key_id)
-    s3_opts[:secret_access_key] = opts[:secret_access_key] if opts.key?(:secret_access_key)
-    s3_opts[:region]            = opts[:region]            if opts.key?(:region)
-
-    @s3 = AWS::S3.new(s3_opts)
-
-    @bucket_name, @base_path = bucket_name, opts[:base_path]
-    raise ArgumentError, "#{bucket_name} doesn't seem to be a valid bucket on your account" if @s3.buckets[bucket_name].nil?
+    @s3 = Aws::S3::Client.new(opts)
   end
 
   # Queues a file to be published.
@@ -124,8 +119,6 @@ class S3Publisher
     
       try_count = 0
       begin
-        obj = @s3.buckets[bucket_name].objects[item[:key_name]]
-
         gzip = item[:gzip] != false && !item[:write_opts][:content_type].match('image/')
 
         if gzip
@@ -134,7 +127,14 @@ class S3Publisher
           item[:contents] = gzip(gzip_body)
         end
 
-        obj.write(item[:contents], item[:write_opts])
+        write_opts = {
+          bucket: bucket_name,
+          key: item[:key_name],
+          body: item[:contents]
+        }
+        write_opts.merge!(item[:write_opts])
+
+        @s3.put_object(write_opts)
 
       rescue Exception => e # backstop against transient S3 errors
         raise e if try_count >= 1

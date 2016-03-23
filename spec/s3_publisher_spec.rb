@@ -4,16 +4,16 @@ describe S3Publisher do
   describe "#push" do
            
     describe "file_name" do
-      it "prepends base_path if provided" do
+      it "prepends base_path if provided", focus: true do
         set_put_expectation(key_name: 'world_cup_2010/events.xml')
-        p = S3Publisher.new('test-bucket', :logger => Logger.new(nil), :base_path => 'world_cup_2010')
+        p = S3Publisher.new('test-bucket', logger: Logger.new(nil), base_path: 'world_cup_2010')
         p.push('events.xml', data: '1234')
         p.run
       end
       
       it "passes name through unaltered if base_path not specified" do
         set_put_expectation(key_name: 'events.xml')
-        p = S3Publisher.new('test-bucket', :logger => Logger.new(nil))
+        p = S3Publisher.new('test-bucket', logger: Logger.new(nil))
         p.push('events.xml', data: '1234')
         p.run
       end      
@@ -92,10 +92,6 @@ describe S3Publisher do
     #  * :data
     #  * :content_type, :cache_control, :content_encoding
     def set_put_expectation opts
-      s3_stub = mock()
-      bucket_stub = mock()
-      object_stub = mock()
-
       key_name = opts[:key_name] || 'myfile.txt'
 
       expected_entries = {}
@@ -111,12 +107,9 @@ describe S3Publisher do
         expected_contents = anything
       end
 
-      object_stub.expects(:write).with(expected_contents, has_entries(expected_entries))
+      expected_entries.merge!(bucket: 'test-bucket', key: key_name, body: expected_contents)
 
-      s3_stub.stubs(:buckets).returns({'test-bucket' => bucket_stub })
-      bucket_stub.stubs(:objects).returns({ key_name => object_stub })
-      
-      AWS::S3.stubs(:new).returns(s3_stub)
+      Aws::S3::Client.any_instance.expects(:put_object).with(has_entries(expected_entries))
     end
     
     def gzip data
@@ -130,7 +123,7 @@ describe S3Publisher do
     end
     
     def push_test_data file_name, opts
-      p = S3Publisher.new('test-bucket', :logger => Logger.new(nil))
+      p = S3Publisher.new('test-bucket', logger: Logger.new(nil))
       p.push(file_name, opts)
       p.run
     end
