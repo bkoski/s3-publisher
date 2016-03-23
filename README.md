@@ -2,6 +2,8 @@
 
 Quickly pub your data files to S3.
 
+**This version depends on aws-sdk 2.x.  For aws-sdk 1.x projects, use version <= 1.0 of this gem.**
+
 Reasons you might want to use this instead of aws-sdk directly:
 
   * parallel uploads using ruby threads.  Concurrency defaults to 3 but can be increased.
@@ -38,7 +40,7 @@ end
 ### Slightly more advanced example:
 
 ```
-S3Publisher.publish('my-bucket', :base_path => 'world_cup', :region => 'us-west-1') do |p|
+S3Publisher.publish('my-bucket', base_path: 'world_cup', region: 'us-west-1') do |p|
     p.push('events.xml', data: '<xml>...', ttl: 15)
 end
 ```
@@ -55,7 +57,11 @@ See class docs for more options.
 
 Since S3Publisher uses [aws-sdk](https://github.com/aws/aws-sdk-ruby) any of the usual credential stores will work, including:
 
- * `AWS.config(access_key_id: '...', secret_access_key: '...', region: 'us-west-2')`
- * `config/aws.yml` in a RAILS project
- * ENV vars
-
+ * `ENV['AWS_ACCESS_KEY_ID'], ENV['AWS_SECRET_ACCESS_KEY'], ENV['AWS_REGION']`
+ * IAM role
+ * ```
+  Aws.config.update({
+    region: 'us-west-2',
+    credentials: Aws::Credentials.new('akid', 'secret')
+  })
+  ```
