@@ -7,6 +7,8 @@
 
 require File.expand_path('../lib/s3-publisher.rb', File.dirname(__FILE__))
 
+ENV['AWS_REGION'] = 'us-east-1'
+
 RSpec.configure do |config|
   # Limit the spec run to only specs with the focus metadata. If no specs have
   # the filtering metadata and `run_all_when_everything_filtered = true` then
