@@ -42,7 +42,7 @@ describe S3Publisher do
     end
 
     describe ":file opt" do
-      it "queues files as a pathname to be read if gzip is false" do
+      it "queues contents of files if gzip is false" do
         set_put_expectation(file: __FILE__)
         push_test_data('myfile.txt', file: __FILE__, gzip: false)
       end
@@ -102,7 +102,7 @@ describe S3Publisher do
       if opts[:data]
         expected_contents = opts[:data]
       elsif opts[:file]
-        expected_contents = Pathname.new(opts[:file])
+        expected_contents = Pathname.new(opts[:file]).read
       else
         expected_contents = anything
       end
