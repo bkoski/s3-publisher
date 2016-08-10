@@ -121,10 +121,13 @@ class S3Publisher
       begin
         gzip = item[:gzip] != false && !item[:write_opts][:content_type].match('image/')
 
+        if item[:contents].is_a?(Pathname)
+          item[:contents] = item[:contents].read
+        end
+
         if gzip
           item[:write_opts][:content_encoding] = 'gzip'
-          gzip_body = item[:contents].is_a?(Pathname) ? item[:contents].read : item[:contents]
-          item[:contents] = gzip(gzip_body)
+          item[:contents] = gzip(item[:contents])
         end
 
         write_opts = {
