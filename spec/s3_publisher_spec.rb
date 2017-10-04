@@ -85,17 +85,29 @@ describe S3Publisher do
         push_test_data('myfile.txt', data: '1234')
       end
     end
+
+    describe "acl" do
+      it "sets ACL to user-supplied string if :acl provided" do
+        set_put_expectation(acl: 'private')
+        push_test_data('myfile.txt', data: '1234', acl: 'private')
+      end
+
+      it "sets ACL to public-read when no option is provded" do
+        set_put_expectation(acl: 'public-read')
+        push_test_data('myfile.txt', data: '1234')
+      end
+    end
     
     # Based on opts, sets expecations for AWS::S3Object.write
     # Can provide expected values for:
     #  * :key_name
     #  * :data
-    #  * :content_type, :cache_control, :content_encoding
+    #  * :content_type, :cache_control, :content_encoding, :acl
     def set_put_expectation opts
       key_name = opts[:key_name] || 'myfile.txt'
 
       expected_entries = {}
-      [:content_type, :cache_control, :content_encoding].each do |k|
+      [:content_type, :cache_control, :content_encoding, :acl].each do |k|
         expected_entries[k] = opts[k] if opts.has_key?(k)
       end
 

@@ -85,6 +85,11 @@ class S3Publisher
       write_opts[:cache_control] = "max-age=#{opts[:ttl] || 5}"
     end
 
+    # And ACL
+    if opts[:acl]
+      write_opts[:acl] = opts[:acl]
+    end
+
     opts[:gzip] = true unless opts.has_key?(:gzip)
 
     @publish_queue.push({ key_name: key_name, contents: contents, write_opts: write_opts, gzip: opts[:gzip] })
